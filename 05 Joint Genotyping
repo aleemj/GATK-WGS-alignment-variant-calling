@@ -1,1 +1,12 @@
+#After all .g.vcf.gz files are ready:
+
+# Combine per-sample GVCFs
+gatk CombineGVCFs -R reference/genome.fa \
+  $(for g in gvcf/*.g.vcf.gz; do echo "-V $g"; done) \
+  -O gvcf/combined.g.vcf.gz
+
+# Joint genotype
+gatk GenotypeGVCFs -R reference/genome.fa \
+  -V gvcf/combined.g.vcf.gz \
+  -O vcf/raw_variants.vcf.gz
 
