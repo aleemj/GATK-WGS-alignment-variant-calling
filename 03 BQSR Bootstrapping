@@ -1,1 +1,29 @@
+#Since this is a new reference genome without a known SNP set, you’ll bootstrap recalibration as follows:
+#Bootstrap round 1:
+
+#!/bin/bash
+#PBS -N bqsr_bootstrap
+#PBS -l select=1:ncpus=8:mem=30gb
+#PBS -j oe
+
+module load gatk samtools
+
+SAMPLE=$1
+REF=reference/genome.fa
+IN=bam/${SAMPLE}.markdup.bam
+OUT=bam/${SAMPLE}.recal.bam
+TABLE=bam/${SAMPLE}.recal.table
+
+# Round 1: raw variant calling for bootstrap
+gatk HaplotypeCaller -R $REF -I $IN -O gvcf/${SAMPLE}.bootstrap.g.vcf.gz -ERC GVCF
+
+# Combine GVCFs (after all samples are done)
+# gatk CombineGVCFs ... (see step 5)
+
+
+# After joint genotyping (see below), use the resulting SNPs as known sites
+#Then rerun recalibration once a preliminary set of variants is obtained:
+gatk BaseRecalibrator -R $REF -I $IN --known-sites vcf/bootstrap_snps.vcf.gz -O $TABLE
+gatk ApplyBQSR -R $REF -I $IN --bqsr-recal-file $TABLE -O $OUT
+samtools index $OUT
 
