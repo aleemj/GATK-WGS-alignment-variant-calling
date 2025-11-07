@@ -1,1 +1,9 @@
+Run once:
+module load bwa
+module load samtools
+module load gatk
+
+# Create index and dictionary
+samtools faidx reference/genome.fa
+gatk CreateSequenceDictionary -R reference/genome.fa -O reference/genome.dict
 
