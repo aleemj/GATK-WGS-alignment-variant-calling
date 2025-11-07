@@ -1,1 +1,24 @@
+project/
+├── reference/
+│   ├── genome.fa
+│   ├── genome.fa.fai
+│   ├── genome.dict
+├── samples/
+│   ├── sample1/
+│   │   ├── sample1_R1.fastq.gz
+│   │   └── sample1_R2.fastq.gz
+│   ├── sample2/
+│   └── ...
+├── scripts/
+│   ├── 01_align_and_sort.sh
+│   ├── 02_mark_duplicates.sh
+│   ├── 03_bqsr_bootstrap.sh
+│   ├── 04_haplotypecaller.sh
+│   ├── 05_genotype_gvcfs.sh
+│   ├── 06_vqsr_filtering.sh
+│   ├── master_submit.sh
+├── bam/
+├── gvcf/
+├── vcf/
+└── logs/
 
