@@ -1,1 +1,46 @@
+#File: scripts/01_align_and_sort.sh
 
+#!/bin/bash
+#PBS -N align_sort
+#PBS -l select=1:ncpus=10:mem=40gb
+#PBS -j oe
+
+module load bwa samtools gatk
+
+SAMPLE=$1
+REF=reference/genome.fa
+OUT=bam/${SAMPLE}.sorted.bam
+
+# Concatenate all FASTQs per sample (if multiple files exist)
+R1_FILES=$(ls samples/${SAMPLE}/*_R1*.fastq.gz | tr '\n' ' ')
+R2_FILES=$(ls samples/${SAMPLE}/*_R2*.fastq.gz | tr '\n' ' ')
+
+# If multiple batches, assign a unique RG ID for each
+# Create a single merged alignment, with separate RGs per pair
+RG_INDEX=1
+RG_STRING=""
+
+for R1 in samples/${SAMPLE}/*_R1*.fastq.gz; do
+    R2=${R1/_R1/_R2}
+    RG_ID="${SAMPLE}_batch${RG_INDEX}"
+    RG_TAG="@RG\\tID:${RG_ID}\\tSM:${SAMPLE}\\tLB:lib1\\tPL:ILLUMINA\\tPU:batch${RG_INDEX}"
+
+    echo "Processing ${SAMPLE}: Batch ${RG_INDEX}"
+
+    bwa mem -t 10 -M -R "$RG_TAG" $REF $R1 $R2 | \
+    samtools view -bS - >> bam/${SAMPLE}_tmp${RG_INDEX}.bam
+
+    RG_INDEX=$((RG_INDEX+1))
+done
+
+# Merge all batches (if >1)
+samtools merge -@ 8 -o $OUT bam/${SAMPLE}_tmp*.bam
+samtools sort -@ 8 -o $OUT $OUT
+samtools index $OUT
+
+# Cleanup temporary BAMs
+rm bam/${SAMPLE}_tmp*.bam
+
+
+#Submit all:
+for s in $(ls samples); do qsub scripts/01_align_and_sort.sh $s; done
