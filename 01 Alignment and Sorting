@@ -1,46 +1,50 @@
-#File: scripts/01_align_and_sort.sh
+################ Step 1: Create SH Files for Each Sample ################
 
-#!/bin/bash
-#PBS -N align_sort
-#PBS -l select=1:ncpus=10:mem=40gb
-#PBS -j oe
+PARENT_DIR="/home/users/nus/aleemj/scratch/esativa_alignment_test/fastq"
+REFERENCE_GENOME="/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.final.sm.fa"
+OUTPUT_DIR=$(dirname "$PARENT_DIR")
 
-module load bwa samtools gatk
+BAM_DIR="$OUTPUT_DIR/bam_files"
+VCF_DIR="$OUTPUT_DIR/vcf_files"
+INTERMEDIATE_DIR="$OUTPUT_DIR/intermediate_files"
+SH_DIR="$OUTPUT_DIR/sh_files"
 
-SAMPLE=$1
-REF=reference/genome.fa
-OUT=bam/${SAMPLE}.sorted.bam
+mkdir -p "$BAM_DIR" "$VCF_DIR" "$INTERMEDIATE_DIR" "$SH_DIR"
 
-# Concatenate all FASTQs per sample (if multiple files exist)
-R1_FILES=$(ls samples/${SAMPLE}/*_R1*.fastq.gz | tr '\n' ' ')
-R2_FILES=$(ls samples/${SAMPLE}/*_R2*.fastq.gz | tr '\n' ' ')
+# BWA index if missing
+[ ! -f "${REFERENCE_GENOME}.bwt" ] && bwa index "$REFERENCE_GENOME"
 
-# If multiple batches, assign a unique RG ID for each
-# Create a single merged alignment, with separate RGs per pair
-RG_INDEX=1
-RG_STRING=""
+# Loop through subdirectories safely
+for SAMPLE_DIR in "$PARENT_DIR"/*; do
+    [ ! -d "$SAMPLE_DIR" ] && continue
+    SAMPLE_NAME=$(basename "$SAMPLE_DIR")
+    OUTPUT_SH="$SH_DIR/$SAMPLE_NAME.sh"
+    echo "Generating script for $SAMPLE_NAME -> $OUTPUT_SH"
 
-for R1 in samples/${SAMPLE}/*_R1*.fastq.gz; do
-    R2=${R1/_R1/_R2}
-    RG_ID="${SAMPLE}_batch${RG_INDEX}"
-    RG_TAG="@RG\\tID:${RG_ID}\\tSM:${SAMPLE}\\tLB:lib1\\tPL:ILLUMINA\\tPU:batch${RG_INDEX}"
+    {
+        echo "#!/bin/bash"
+        echo "#PBS -q normal"
+        echo "#PBS -l select=1:ncpus=4:mem=100G"
+        echo "#PBS -l walltime=24:00:00"
+        echo "#PBS -N $SAMPLE_NAME"
+        echo "#PBS -P Personal"
+        echo "set -euo pipefail"
+        echo "module load bwa samtools bcftools gatk"
 
-    echo "Processing ${SAMPLE}: Batch ${RG_INDEX}"
+        # Safe concatenation
+        echo "cat $SAMPLE_DIR/*_1.fq.gz > $INTERMEDIATE_DIR/${SAMPLE_NAME}_R1.fq.gz"
+        echo "cat $SAMPLE_DIR/*_2.fq.gz > $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz"
 
-    bwa mem -t 10 -M -R "$RG_TAG" $REF $R1 $R2 | \
-    samtools view -bS - >> bam/${SAMPLE}_tmp${RG_INDEX}.bam
+        # Properly quoted bwa mem line
+        echo "bwa mem -t 4 -R \"@RG\tID:${SAMPLE_NAME}\tSM:${SAMPLE_NAME}\tPL:ILLUMINA\" $REFERENCE_GENOME $INTERMEDIATE_DIR/${SAMPLE_NAME}_R1.fq.gz $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz | samtools sort --threads 4 -o $BAM_DIR/${SAMPLE_NAME}.bam"
+		
+        # Index BAM and run GATK
+        echo "samtools index $BAM_DIR/${SAMPLE_NAME}.bam"
+        echo "gatk MarkDuplicates -I $BAM_DIR/${SAMPLE_NAME}.bam -O $BAM_DIR/${SAMPLE_NAME}.md.bam -M $BAM_DIR/${SAMPLE_NAME}.metrics.txt --CREATE_INDEX true --TMP_DIR $BAM_DIR/tmp"
+        echo "gatk HaplotypeCaller -R $REFERENCE_GENOME -I $BAM_DIR/${SAMPLE_NAME}.md.bam -O $VCF_DIR/${SAMPLE_NAME}.g.vcf.gz -ERC GVCF --native-pair-hmm-threads 4"
+    } > "$OUTPUT_SH"
 
-    RG_INDEX=$((RG_INDEX+1))
+    chmod +x "$OUTPUT_SH"
 done
 
-# Merge all batches (if >1)
-samtools merge -@ 8 -o $OUT bam/${SAMPLE}_tmp*.bam
-samtools sort -@ 8 -o $OUT $OUT
-samtools index $OUT
-
-# Cleanup temporary BAMs
-rm bam/${SAMPLE}_tmp*.bam
-
-
-#Submit all:
-for s in $(ls samples); do qsub scripts/01_align_and_sort.sh $s; done
+echo "All sample scripts generated successfully in $SH_DIR"
