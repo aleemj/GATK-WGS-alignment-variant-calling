@@ -8,6 +8,7 @@ set -euo pipefail
 module load gatk bcftools
 
 REF=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.final.sm.fa
+REF_INTERVALS=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.intervals.list
 VCF_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/vcf_files
 DB_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/genomicsdb
 OUT_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/joint_vcf
@@ -25,8 +26,9 @@ do
 done
 
 gatk GenomicsDBImport \
-  --sample-name-map $VCF_DIR/sample_map.txt \
-  --genomicsdb-workspace-path $DB_DIR \
+  --sample-name-map /home/users/nus/aleemj/scratch/esativa_alignment_test/vcf_files/sample_map.txt \
+  --genomicsdb-workspace-path /home/users/nus/aleemj/scratch/esativa_alignment_test/genomicsdb \
+  -L $REF_INTERVALS \
   --reader-threads 4
 
 gatk GenotypeGVCFs \
