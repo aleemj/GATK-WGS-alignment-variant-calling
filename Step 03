@@ -14,7 +14,7 @@ DB_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/genomicsdb
 OUT_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/joint_vcf
 SAMPLE_MAP=$VCF_DIR/sample_map.txt
 
-mkdir -p $DB_DIR $OUT_DIR
+mkdir -p $OUT_DIR
 
 # Create sample map automatically
 rm -f $SAMPLE_MAP
