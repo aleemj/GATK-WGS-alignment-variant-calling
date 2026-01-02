@@ -8,19 +8,33 @@ the following code contains 3 steps. Step 1 should be run once first, step 2 con
 before running this code, one should already have a sub-folder (raw) in the alignment folder containning many other subfolders - one for every sample containing the raw reads
 
 Recommended directory structure
+
 project/
+
 ├── ref/
+
 │   ├── genome.fa
+
 │   ├── genome.fa.fai
+
 │   └── genome.dict
+
 ├── fastq/
+
 │   ├── sample1
+
 │   ├── sample2
+
 │   └── ...
+
 ├── bam_files/
+
 ├── vcf_files/
+
 ├── sh_files/
+
 └── intermediate_files/
+
 
 running these steps will create all subdirectories and store files accordingly
 
