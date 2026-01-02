@@ -8,7 +8,7 @@ set -euo pipefail
 module load gatk bcftools
 
 REF=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.final.sm.fa
-REF_INTERVALS=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.intervals.list
+REF_INTERVALS=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.intervals.list #text file with list of scaffolds / chromosomes in ref
 VCF_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/vcf_files
 DB_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/genomicsdb
 OUT_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/joint_vcf
