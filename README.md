@@ -1,8 +1,11 @@
 # GATK-WGS-alignment-variant-calling
+
 Pipeline for WGS alignment and variant calling using GATK Software
+
 Last updated by Adrian on 2 January 2026
 
 ##########READ ME!##########
+
 the following code contains 3 steps. Step 1 should be run once first, step 2 continuosly over the course until all samples are aligned. Then Step 3 once.
 
 before running this code, one should already have a sub-folder (raw) in the alignment folder containning many other subfolders - one for every sample containing the raw reads
