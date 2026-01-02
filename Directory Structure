@@ -9,16 +9,11 @@ project/
 │   │   └── sample1_R2.fastq.gz
 │   ├── sample2/
 │   └── ...
-├── scripts/
-│   ├── 01_align_and_sort.sh
-│   ├── 02_mark_duplicates.sh
-│   ├── 03_bqsr_bootstrap.sh
-│   ├── 04_haplotypecaller.sh
-│   ├── 05_genotype_gvcfs.sh
-│   ├── 06_vqsr_filtering.sh
-│   ├── master_submit.sh
-├── bam/
-├── gvcf/
-├── vcf/
-└── logs/
+├── sh_files/
+│   ├── sample1.sh
+│   ├── sample2.sh
+│   └── ...
+├── bam_files/
+├── vcf_files/
+└── intermediate_files/
 
