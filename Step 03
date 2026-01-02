@@ -11,8 +11,18 @@ REF=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.final.sm.fa
 VCF_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/vcf_files
 DB_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/genomicsdb
 OUT_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/joint_vcf
+SAMPLE_MAP=$VCF_DIR/sample_map.txt
 
 mkdir -p $DB_DIR $OUT_DIR
+
+# Create sample map automatically
+rm -f $SAMPLE_MAP
+
+for gvcf in $VCF_DIR/*.g.vcf.gz
+do
+    sample=$(basename "$gvcf" .g.vcf.gz)
+    echo -e "${sample}\t${gvcf}" >> $SAMPLE_MAP
+done
 
 gatk GenomicsDBImport \
   --sample-name-map $VCF_DIR/sample_map.txt \
