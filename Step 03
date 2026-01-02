@@ -1,0 +1,25 @@
+#PBS -q normal
+#PBS -l select=1:ncpus=4:mem=100G
+#PBS -l walltime=24:00:00
+#PBS -N JointGenotyping
+#PBS -P Personal
+
+set -euo pipefail
+module load gatk bcftools
+
+REF=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.final.sm.fa
+VCF_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/vcf_files
+DB_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/genomicsdb
+OUT_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/joint_vcf
+
+mkdir -p $DB_DIR $OUT_DIR
+
+gatk GenomicsDBImport \
+  --sample-name-map $VCF_DIR/sample_map.txt \
+  --genomicsdb-workspace-path $DB_DIR \
+  --reader-threads 4
+
+gatk GenotypeGVCFs \
+  -R $REF \
+  -V gendb://$DB_DIR \
+  -O $OUT_DIR/esativa.raw.vcf.gz
