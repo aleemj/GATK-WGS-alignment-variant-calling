@@ -13,19 +13,19 @@ project/
 
 ├── ref/
 
-│   ├── genome.fa
+    ├── genome.fa
 
-│   ├── genome.fa.fai
+    ├── genome.fa.fai
 
-│   └── genome.dict
+    └── genome.dict
 
 ├── fastq/
 
-│   ├── sample1
+    ├── sample1
 
-│   ├── sample2
+    ├── sample2
 
-│   └── ...
+    └── ...
 
 ├── bam_files/
 
