@@ -1,50 +1,28 @@
-################ Step 1: Create SH Files for Each Sample ################
+################Step 2: Submit Jobs################
+#Function: This script submits jobs for each sample, ensuring that VCF files are only processed if they don’t already exist.
 
-PARENT_DIR="/home/users/nus/aleemj/scratch/esativa_alignment_test/fastq"
-REFERENCE_GENOME="/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.final.sm.fa"
-OUTPUT_DIR=$(dirname "$PARENT_DIR")
+#!/bin/bash
 
-BAM_DIR="$OUTPUT_DIR/bam_files"
-VCF_DIR="$OUTPUT_DIR/vcf_files"
-INTERMEDIATE_DIR="$OUTPUT_DIR/intermediate_files"
-SH_DIR="$OUTPUT_DIR/sh_files"
+# Define the directories
+SH_DIR=<INPUT> #IMPT TO CHANGE - folder where samples sh files are contained 
+BAM_DIR=<INPUT> #IMPT TO CHANGE - folder where individual bam files are
 
-mkdir -p "$BAM_DIR" "$VCF_DIR" "$INTERMEDIATE_DIR" "$SH_DIR"
+# Change to the SH_DIR directory
+cd "$SH_DIR" || { echo "Failed to change directory to $SH_DIR"; exit 1; }
+# Get a list of all .sh files
+sh_files=("$SH_DIR"/*.sh)
+# Loop through each .sh file and submit it if the corresponding BAM file does not exist
+for sh_file in "${sh_files[@]}"; do
+    sample_name=$(basename "$sh_file" .sh)
+    # Use a wildcard to match any BAM file starting with the sample name
+    bam_file_pattern="$BAM_DIR/${sample_name}.bam*"
+    # Use `find` to check if any matching files exist
+    matching_files=$(find "$BAM_DIR" -type f -name "${sample_name}.bam*" | wc -l)
 
-# BWA index if missing
-[ ! -f "${REFERENCE_GENOME}.bwt" ] && bwa index "$REFERENCE_GENOME"
-
-# Loop through subdirectories safely
-for SAMPLE_DIR in "$PARENT_DIR"/*; do
-    [ ! -d "$SAMPLE_DIR" ] && continue
-    SAMPLE_NAME=$(basename "$SAMPLE_DIR")
-    OUTPUT_SH="$SH_DIR/$SAMPLE_NAME.sh"
-    echo "Generating script for $SAMPLE_NAME -> $OUTPUT_SH"
-
-    {
-        echo "#!/bin/bash"
-        echo "#PBS -q normal"
-        echo "#PBS -l select=1:ncpus=4:mem=100G"
-        echo "#PBS -l walltime=24:00:00"
-        echo "#PBS -N $SAMPLE_NAME"
-        echo "#PBS -P Personal"
-        echo "set -euo pipefail"
-        echo "module load bwa samtools bcftools gatk"
-
-        # Safe concatenation
-        echo "cat $SAMPLE_DIR/*_1.fq.gz > $INTERMEDIATE_DIR/${SAMPLE_NAME}_R1.fq.gz"
-        echo "cat $SAMPLE_DIR/*_2.fq.gz > $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz"
-
-        # Properly quoted bwa mem line
-        echo "bwa mem -t 4 -R \"@RG\tID:${SAMPLE_NAME}\tSM:${SAMPLE_NAME}\tPL:ILLUMINA\" $REFERENCE_GENOME $INTERMEDIATE_DIR/${SAMPLE_NAME}_R1.fq.gz $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz | samtools sort --threads 4 -o $BAM_DIR/${SAMPLE_NAME}.bam"
-		
-        # Index BAM and run GATK
-        echo "samtools index $BAM_DIR/${SAMPLE_NAME}.bam"
-        echo "gatk MarkDuplicates -I $BAM_DIR/${SAMPLE_NAME}.bam -O $BAM_DIR/${SAMPLE_NAME}.md.bam -M $BAM_DIR/${SAMPLE_NAME}.metrics.txt --CREATE_INDEX true --TMP_DIR $BAM_DIR/tmp"
-        echo "gatk HaplotypeCaller -R $REFERENCE_GENOME -I $BAM_DIR/${SAMPLE_NAME}.md.bam -O $VCF_DIR/${SAMPLE_NAME}.g.vcf.gz -ERC GVCF --native-pair-hmm-threads 4"
-    } > "$OUTPUT_SH"
-
-    chmod +x "$OUTPUT_SH"
+    if [ "$matching_files" -eq 0 ]; then
+        echo "Submitting job: $sh_file"
+        qsub "$sh_file"
+    else
+        echo "vcf file already exists for sample: $sample_name, skipping..."
+    fi
 done
-
-echo "All sample scripts generated successfully in $SH_DIR"
