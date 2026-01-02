@@ -36,7 +36,7 @@ project/
 
 ├── sh_files/
 
-└── intermediate_files/
+├── intermediate_files/
 
 
 running these steps will create all subdirectories and store files accordingly
