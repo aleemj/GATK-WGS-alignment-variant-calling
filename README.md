@@ -6,53 +6,30 @@ Last updated by Adrian on 2 January 2026
 
 ##########READ ME!##########
 
-the following code contains 3 steps. Step 1 should be run once first, step 2 continuosly over the course until all samples are aligned. Then Step 3 once.
+The following code contains 3 steps. Step 1 should be run once first, step 2 continuosly over the course until all samples are aligned. Then Step 3 and 4 once.
 
-before running this code, one should already have a sub-folder (raw) in the alignment folder containning many other subfolders - one for every sample containing the raw reads
+Before running this code, one should already have a sub-folder (raw) in the alignment folder containning many other subfolders - one for every sample containing the sequencing raw reads
 
-Recommended directory structure
+Refer to Directory Structure for recommended directory structure.
 
-project/
+Running these steps will create all subdirectories and store files accordingly
 
-├── ref/
+The final output will be genotype files (SNP and INDEL) ready for analysis depending on filtering applied.
 
-    ├── genome.fa
-
-    ├── genome.fa.fai
-
-    └── genome.dict
-
-├── fastq/
-
-    ├── sample1
-
-    ├── sample2
-
-    └── ...
-
-├── bam_files/
-
-├── vcf_files/
-
-├── sh_files/
-
-├── intermediate_files/
-
-
-running these steps will create all subdirectories and store files accordingly
-
-the final output will be genotype files ready for analysis depending on filtering applied
-
-please edit directories accordingly
+Please edit directories accordingly before running.
 
 #STEP 1
 
 Run this once to create respective directories, index reference if required and write sh files for alignment of every sample until individual gvcf files.
 
-#STEP 2
+#STEP 2 (Computationally intense)
 
 runs as many sample sh files as the system allows, will check for already completed bam files before running remaining sh files. This line of code can be run as many times over the course of a few days until all samples are created.
 
-#STEP 3
+#STEP 3 (Computationally intense, may consider breaking into smaller parts)
 
-Joint genotyping step across all samples, merges all individual gvcf files and genotypes them. Filters variants to provide analysis ready genotype file. Output final genotype files into a new subdirectory.
+Joint genotyping step across all samples, merges all individual gvcf files and genotypes them. 
+
+#STEP 4
+
+Filters variants to provide analysis ready genotype file. Output final genotype files into a new subdirectory.
