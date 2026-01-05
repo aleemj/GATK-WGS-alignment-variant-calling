@@ -2,7 +2,7 @@
 
 Pipeline for WGS alignment and variant calling using GATK Software
 
-Last updated by Adrian on 2 January 2026
+Last updated by Adrian on 5 January 2026
 
 ##########READ ME!########
 **
