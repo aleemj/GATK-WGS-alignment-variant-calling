@@ -1,3 +1,11 @@
+################ Step X: Filter Variants ################
+# Function: This script splits a joint VCF into SNPs and INDELs,
+# applies hard filtering according to GATK best practices,
+# and outputs PASS-only VCFs ready for downstream analysis.
+# User only needs to edit the variables at the top:
+# REF, VCF_IN, OUT_DIR, OUTPUTNAME, and optionally JAVA_MEM/THREADS.
+# Recommended: index the output VCFs for faster downstream use.
+
 #PBS -q normal
 #PBS -l select=1:ncpus=1:mem=100G
 #PBS -l walltime=24:00:00
