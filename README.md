@@ -2,7 +2,7 @@
 
 Pipeline for whole genome sequencing (WGS) alignment and variant calling using GATK software
 
-#Last updated by Adrian on 5 January 2026
+#Last updated by Adrian on 6 January 2026
 
 --------------------------------------------------------------------------------------------
 
