@@ -1,1 +1,63 @@
+#PBS -q normal
+#PBS -l select=1:ncpus=4:mem=100G
+#PBS -l walltime=12:00:00
+#PBS -N Filtering
+#PBS -P Personal
+
+set -euo pipefail
+module load gatk bcftools
+
+REF=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.final.sm.fa
+VCF_IN=/home/users/nus/aleemj/scratch/esativa_alignment_test/joint_vcf/esativa.raw.vcf.gz
+OUT_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/joint_vcf
+
+# ------------------
+# Split SNPs
+# ------------------
+gatk SelectVariants \
+  -R $REF \
+  -V $VCF_IN \
+  --select-type-to-include SNP \
+  -O $OUT_DIR/esativa.snps.vcf.gz
+
+# Hard filter SNPs
+gatk VariantFiltration \
+  -R $REF \
+  -V $OUT_DIR/esativa.snps.vcf.gz \
+  --filter-name "QD_lt_2" --filter-expression "QD < 2.0" \
+  --filter-name "FS_gt_60" --filter-expression "FS > 60.0" \
+  --filter-name "MQ_lt_40" --filter-expression "MQ < 40.0" \
+  --filter-name "SOR_gt_3" --filter-expression "SOR > 3.0" \
+  --filter-name "MQRankSum_lt_-12.5" --filter-expression "MQRankSum < -12.5" \
+  --filter-name "ReadPosRankSum_lt_-8" --filter-expression "ReadPosRankSum < -8.0" \
+  -O $OUT_DIR/esativa.snps.filtered.vcf.gz
+
+# Keep PASS SNPs
+bcftools view -f PASS \
+  $OUT_DIR/esativa.snps.filtered.vcf.gz \
+  -Oz -o $OUT_DIR/esativa.snps.PASS.vcf.gz
+
+# ------------------
+# Split INDELs
+# ------------------
+gatk SelectVariants \
+  -R $REF \
+  -V $VCF_IN \
+  --select-type-to-include INDEL \
+  -O $OUT_DIR/esativa.indels.vcf.gz
+
+# Hard filter INDELs
+gatk VariantFiltration \
+  -R $REF \
+  -V $OUT_DIR/esativa.indels.vcf.gz \
+  --filter-name "QD_lt_2" --filter-expression "QD < 2.0" \
+  --filter-name "FS_gt_200" --filter-expression "FS > 200.0" \
+  --filter-name "SOR_gt_10" --filter-expression "SOR > 10.0" \
+  --filter-name "ReadPosRankSum_lt_-20" --filter-expression "ReadPosRankSum < -20.0" \
+  -O $OUT_DIR/esativa.indels.filtered.vcf.gz
+
+# Keep PASS INDELs
+bcftools view -f PASS \
+  $OUT_DIR/esativa.indels.filtered.vcf.gz \
+  -Oz -o $OUT_DIR/esativa.indels.PASS.vcf.gz
 
