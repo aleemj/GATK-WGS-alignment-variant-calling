@@ -26,12 +26,14 @@ do
 done
 
 gatk GenomicsDBImport \
+  --java-options "-Xmx8G" \
   --sample-name-map /home/users/nus/aleemj/scratch/esativa_alignment_test/vcf_files/sample_map.txt \
   --genomicsdb-workspace-path /home/users/nus/aleemj/scratch/esativa_alignment_test/genomicsdb \
   -L $REF_INTERVALS \
   --reader-threads 4
 
 gatk GenotypeGVCFs \
+  --java-options "-Xmx8G" \
   -R $REF \
   -V gendb://$DB_DIR \
   -O $OUT_DIR/esativa.raw.vcf.gz
