@@ -49,8 +49,8 @@ for SAMPLE_DIR in "$PARENT_DIR"/*; do
 		
         # Index BAM and run GATK
         echo "samtools index $BAM_DIR/${SAMPLE_NAME}.bam"
-        echo "gatk MarkDuplicates -I $BAM_DIR/${SAMPLE_NAME}.bam -O $BAM_DIR/${SAMPLE_NAME}.md.bam -M $BAM_DIR/${SAMPLE_NAME}.metrics.txt --CREATE_INDEX true --TMP_DIR $BAM_DIR/tmp"
-        echo "gatk HaplotypeCaller -R $REFERENCE_GENOME -I $BAM_DIR/${SAMPLE_NAME}.md.bam -O $VCF_DIR/${SAMPLE_NAME}.g.vcf.gz -ERC GVCF --native-pair-hmm-threads 4"
+        echo "gatk MarkDuplicates --java-options "-Xmx8G" -I $BAM_DIR/${SAMPLE_NAME}.bam -O $BAM_DIR/${SAMPLE_NAME}.md.bam -M $BAM_DIR/${SAMPLE_NAME}.metrics.txt --CREATE_INDEX true --TMP_DIR $BAM_DIR/tmp"
+        echo "gatk HaplotypeCaller --java-options "-Xmx8G" -R $REFERENCE_GENOME -I $BAM_DIR/${SAMPLE_NAME}.md.bam -O $VCF_DIR/${SAMPLE_NAME}.g.vcf.gz -ERC GVCF --native-pair-hmm-threads 4"
     } > "$OUTPUT_SH"
 
     chmod +x "$OUTPUT_SH"
