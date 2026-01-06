@@ -41,9 +41,11 @@ gatk GenomicsDBImport \
   --java-options "-Xmx$JAVA_MEM" \
   --sample-name-map "$SAMPLE_MAP" \
   --genomicsdb-workspace-path "$DB_DIR" \
+# --genomicsdb-update-workspace-path \ #use this instead if adding new samples
   -L "$REF_INTERVALS" \
   --reader-threads "$THREADS" \
   --merge-input-intervals
+  --batch-size 50
 
 gatk GenotypeGVCFs \
   --java-options "-Xmx80G" \
