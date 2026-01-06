@@ -33,7 +33,7 @@ gatk GenomicsDBImport \
   --reader-threads 4
 
 gatk GenotypeGVCFs \
-  --java-options "-Xmx8G" \
+  --java-options "-Xmx80G" \
   -R $REF \
   -V gendb://$DB_DIR \
   -O $OUT_DIR/esativa.raw.vcf.gz
