@@ -20,7 +20,7 @@
 #     PARENT_DIR, REFERENCE_GENOME, THREADS, JAVA_MEM
 ###############################################################################
 
-# USER CONFIGURATION
+# ---------------- User-defined directories ----------------
 
 PARENT_DIR="<INPUT>"          # Directory containing one subfolder per sample
 REFERENCE_GENOME="<INPUT>"    # Reference genome FASTA
@@ -28,7 +28,7 @@ REFERENCE_GENOME="<INPUT>"    # Reference genome FASTA
 THREADS=4
 JAVA_MEM="80G"
 
-# DERIVED DIRECTORIES
+# ---------------- Derived directories ----------------
 
 OUTPUT_DIR="$(dirname "$PARENT_DIR")"
 
