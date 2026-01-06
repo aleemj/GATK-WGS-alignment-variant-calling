@@ -66,3 +66,7 @@ gatk VariantFiltration \
   --filter-name "ReadPosRankSum_lt_-20" --filter-expression "ReadPosRankSum < -20.0" \
   -O $INDEL_PASS
 
+$index files
+bcftools index -f "$SNP_PASS"
+bcftools index -f "$INDEL_PASS"
+
