@@ -1,43 +1,89 @@
-# GATK-WGS-alignment-variant-calling
+# GATK WGS Alignment & Variant Calling Pipeline
 
-Pipeline for WGS alignment and variant calling using GATK Software
+Pipeline for whole genome sequencing (WGS) alignment and variant calling using GATK software
 
-Last updated by Adrian on 5 January 2026
+#Last updated by Adrian on 5 January 2026
 
-##########READ ME!########
-**
-The following code contains 3 steps. Step 1 should be run once first, step 2 continuosly over the course until all samples are aligned. Then Step 3 and 4 once.
+--------------------------------------------------------------------------------------------
 
-Before running this code, one should already have a sub-folder (raw) in the alignment folder containning many other subfolders - one for every sample containing the sequencing raw reads
 
-Refer to Directory Structure for recommended directory structure.
+Overview
+--------------------------------------------------------------------------------------------
 
-Running these steps will create all subdirectories and store files accordingly
 
-The final output will be genotype files (SNP and INDEL) ready for analysis depending on filtering applied.
+This pipeline contains four main steps for WGS analysis. It is designed to process raw sequencing reads, perform alignment, variant calling, joint genotyping, and filtering to produce analysis ready genotype files (SNPs and INDELs).
 
-Please edit directories accordingly before running.
+Before running this pipeline, ensure you have a parent directory containing subfolders for each sample, each with the raw sequencing reads (FASTQ files). All necessary output directories will be created automatically.
 
-#STEP 1
+--------------------------------------------------------------------------------------------
 
-Run this once to create respective directories, index reference if required and write sh files for alignment of every sample until individual gvcf files.
+Step 1: Generate per-sample alignment & variant calling scripts
+--------------------------------------------------------------------------------------------
 
-#STEP 2 (Computationally intense)
 
-runs as many sample sh files as the system allows, will check for already completed bam files before running remaining sh files. This line of code can be run as many times over the course of a few days until all samples are created.
+Run once to:
 
-#STEP 3 (Computationally intense, may consider breaking into smaller parts)
+Create output directories (BAM, VCF, intermediate, scripts)
 
-Joint genotyping step across all samples, merges all individual gvcf files and genotypes them. 
+Index the reference genome if necessary
 
-#STEP 4
+Generate PBS compatible .sh scripts for each sample
 
-Filters variants to provide analysis ready genotype file. Output final genotype files into a new subdirectory.
+Each generated script performs:
 
-**Useful References
-**
-1. https://ngs101.com/how-to-analyze-whole-genome-sequencing-data-for-absolute-beginners-part-1-from-raw-reads-to-high-quality-variants-using-gatk/
-2. https://gatk.broadinstitute.org/hc/en-us/articles/360035535912-Data-pre-processing-for-variant-discovery
-3. https://gatk.broadinstitute.org/hc/en-us/articles/360035535932-Germline-short-variant-discovery-SNPs-Indels
-4. https://gatk.broadinstitute.org/hc/en-us/articles/360035890431-The-logic-of-joint-calling-for-germline-short-variants
-5. https://hpc.nih.gov/training/gatk_tutorial/
+1. FASTQ concatenation
+2. BWA-MEM alignment
+3. BAM sorting
+4. GATK MarkDuplicates
+5. BAM indexing
+6. GATK HaplotypeCaller (GVCF mode)
+
+#Warning: Multithreaded. Does not submit jobs — generates scripts only.
+
+Step 2: Submit jobs for each sample
+--------------------------------------------------------------------------------------------
+
+
+Computationally intensive
+
+Submits .sh scripts generated in Step 1
+
+Automatically skips samples whose BAM files already exist
+
+Can be run repeatedly over several days until all samples are processed
+
+Step 3: Joint Genotyping
+--------------------------------------------------------------------------------------------
+
+
+Computationally intensive
+
+Merges all individual GVCF files into a GenomicsDB workspace
+
+Runs GenotypeGVCFs to produce a joint VCF
+
+Consider breaking the process by intervals or chromosomes if the dataset is very large
+
+Can add new samples later using --genomicsdb-update-workspace-path
+
+Step 4: Variant Filtering
+--------------------------------------------------------------------------------------------
+
+
+Splits the joint VCF into SNPs and INDELs
+
+Applies GATK hard filtering for quality control
+
+Produces PASS only VCFs ready for downstream analysis
+
+Recommended: index filtered VCFs for faster downstream usage
+
+Notes / Recommendations
+--------------------------------------------------------------------------------------------
+
+
+Edit user defined variables (paths, memory, threads, output names) before running
+
+Steps 2 and 3 are resource intensive; monitor memory and walltime
+
+Downstream tools (GWAS, annotation) require indexed VCFs
