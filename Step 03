@@ -9,14 +9,6 @@ module load gatk bcftools
 
 JAVA_MEM=80G
 THREADS=2
-REF=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.final.sm.fa
-REF_INTERVALS=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.intervals.list #text file with list of scaffolds / chromosomes in ref
-VCF_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/vcf_files
-DB_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/genomicsdb
-OUT_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/joint_vcf
-SAMPLE_MAP=$VCF_DIR/sample_map.txt
-
-mkdir -p $OUT_DIR
 
 # ---------------- User-defined paths ----------------
 REF="<PATH_TO_REFERENCE_fa>"
