@@ -14,12 +14,13 @@ THREADS=1
 REF="<IPNUT_REFERENCE_fa>"
 VCF_IN="<IMPUT_COMPILED_VCF.GZ>"
 OUT_DIR="<INPUT_OUTPUT_DIR>"
+OUTPUTNAME="<INPUT_OUTPUT_NAME>"
 
 # Output filenames
-SNP="$OUT_DIR/<OUTPUTNAME>.SNP.vcf.gz"
-SNP_PASS="$OUT_DIR/<OUTPUTNAME>.SNP.PASS.vcf.gz"
-INDEL="$OUT_DIR/<OUTPUTNAME>.INDEL.vcf.gz"
-INDEL_PASS="$OUT_DIR/<OUTPUTNAME>.INDEL.PASS.vcf.gz"
+SNP="$OUT_DIR/$OUTPUTNAME.SNP.vcf.gz"
+SNP_PASS="$OUT_DIR/$OUTPUTNAME.SNP.PASS.vcf.gz"
+INDEL="$OUT_DIR/$OUTPUTNAME.INDEL.vcf.gz"
+INDEL_PASS="$OUT_DIR/$OUTPUTNAME.INDEL.PASS.vcf.gz"
 
 # ------------------
 # Split SNPs
@@ -35,7 +36,7 @@ gatk SelectVariants \
 gatk VariantFiltration \
   --java-options "-Xmx$JAVA_MEM" \
   -R $REF \
-  -V $VCF_IN \
+  -V $SNP \
   --filter-name "QD_lt_2" --filter-expression "QD < 2.0" \
   --filter-name "FS_gt_60" --filter-expression "FS > 60.0" \
   --filter-name "MQ_lt_40" --filter-expression "MQ < 40.0" \
@@ -58,7 +59,7 @@ gatk SelectVariants \
 gatk VariantFiltration \
   --java-options "-Xmx$JAVA_MEM" \
   -R $REF \
-  -V $VCF_IN \
+  -V $INDEL \
   --filter-name "QD_lt_2" --filter-expression "QD < 2.0" \
   --filter-name "FS_gt_200" --filter-expression "FS > 200.0" \
   --filter-name "SOR_gt_10" --filter-expression "SOR > 10.0" \
