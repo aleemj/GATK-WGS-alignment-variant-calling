@@ -7,6 +7,8 @@
 set -euo pipefail
 module load gatk bcftools
 
+JAVA_MEM=80G
+THREADS=4
 REF=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.final.sm.fa
 REF_INTERVALS=/home/users/nus/aleemj/scratch/esativa_alignment_test/ref/eruSat.intervals.list #text file with list of scaffolds / chromosomes in ref
 VCF_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/vcf_files
@@ -16,24 +18,35 @@ SAMPLE_MAP=$VCF_DIR/sample_map.txt
 
 mkdir -p $OUT_DIR
 
-# Create sample map automatically
-rm -f $SAMPLE_MAP
+# ---------------- User-defined paths ----------------
+REF="<PATH_TO_REFERENCE_fa>"
+REF_INTERVALS="<PATH_TO_INTERVALS_LIST>"  # scaffolds/chromosomes, separately one must create a txt file (line separated) with list of scaffols/chromosmes in ref
+VCF_DIR="<PATH_TO_VCF_DIR>"
+DB_DIR="<PATH_TO_GENOMICSDB_WORKSPACE>" #must point to a non-existent or empty directory, unless adding new samples to an existing database
+OUT_DIR="<PATH_TO_OUTPUT_VCF>"
+OUT_VCF="$OUT_DIR/<OUTPUTNAME>.vcf.gz"
 
-for gvcf in $VCF_DIR/*.g.vcf.gz
+mkdir -p "$OUT_DIR"
+
+# ---------------- Create sample map ----------------
+SAMPLE_MAP="$VCF_DIR/sample_map.txt"
+rm -f "$SAMPLE_MAP"for gvcf in $VCF_DIR/*.g.vcf.gz
 do
     sample=$(basename "$gvcf" .g.vcf.gz)
     echo -e "${sample}\t${gvcf}" >> $SAMPLE_MAP
 done
 
+# ---------------- GenomicsDB Import ----------------
 gatk GenomicsDBImport \
-  --java-options "-Xmx80G" \
-  --sample-name-map /home/users/nus/aleemj/scratch/esativa_alignment_test/vcf_files/sample_map.txt \
-  --genomicsdb-workspace-path /home/users/nus/aleemj/scratch/esativa_alignment_test/genomicsdb \
-  -L $REF_INTERVALS \
-  --reader-threads 4
+  --java-options "-Xmx$JAVA_MEM" \
+  --sample-name-map "$SAMPLE_MAP" \
+  --genomicsdb-workspace-path "$DB_DIR" \
+  -L "$REF_INTERVALS" \
+  --reader-threads "$THREADS" \
+  --merge-input-intervals
 
 gatk GenotypeGVCFs \
   --java-options "-Xmx80G" \
   -R $REF \
   -V gendb://$DB_DIR \
-  -O $OUT_DIR/esativa.raw.vcf.gz
+  -O "$OUT_VCF"
