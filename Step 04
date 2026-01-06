@@ -15,6 +15,7 @@ OUT_DIR=/home/users/nus/aleemj/scratch/esativa_alignment_test/joint_vcf
 # Split SNPs
 # ------------------
 gatk SelectVariants \
+  --java-options "-Xmx8G" \
   -R $REF \
   -V $VCF_IN \
   --select-type-to-include SNP \
@@ -22,6 +23,7 @@ gatk SelectVariants \
 
 # Hard filter SNPs
 gatk VariantFiltration \
+  --java-options "-Xmx8G" \
   -R $REF \
   -V $OUT_DIR/esativa.snps.vcf.gz \
   --filter-name "QD_lt_2" --filter-expression "QD < 2.0" \
@@ -41,6 +43,7 @@ bcftools view -f PASS \
 # Split INDELs
 # ------------------
 gatk SelectVariants \
+  --java-options "-Xmx8G" \
   -R $REF \
   -V $VCF_IN \
   --select-type-to-include INDEL \
@@ -48,6 +51,7 @@ gatk SelectVariants \
 
 # Hard filter INDELs
 gatk VariantFiltration \
+  --java-options "-Xmx8G" \
   -R $REF \
   -V $OUT_DIR/esativa.indels.vcf.gz \
   --filter-name "QD_lt_2" --filter-expression "QD < 2.0" \
