@@ -1,6 +1,14 @@
 #===============================================================================
 # Step 2: Submit Jobs for Each Sample
-# Function: Submit jobs for samples, skipping those whose VCF already exists.
+# Function: This script submits per-sample job scripts (.sh) to the cluster.
+# It checks if a BAM file already exists for a sample and skips submission
+# if the file exists to avoid re-running completed samples.
+# User should edit the top variables:
+# - SH_DIR : directory containing per-sample .sh scripts
+# - BAM_DIR: directory where BAM/VCF files are generated
+# Notes:
+# - Uses `qsub` for job submission on PBS
+# - Ensures safe directory change and checks for existing files
 #===============================================================================
 
 #!/bin/bash
