@@ -1,23 +1,26 @@
 ###############################################################################
 # Step 1: Generate per-sample alignment + variant calling shell scripts
 #
-# This script scans a parent directory containing one folder per sample and
-# generates a PBS-compatible .sh file for each sample.
+# Function: This script scans a parent directory containing one folder per sample
+# and generates a PBS-compatible .sh file for each sample.
 #
 # Each generated script performs:
-#   1. FASTQ concatenation
-#   2. BWA-MEM alignment
-#   3. BAM sorting & indexing
-#   4. GATK MarkDuplicates
-#   5. GATK HaplotypeCaller (GVCF mode)
+#   1. Concatenation of multiple FASTQ files per sample
+#   2. BWA-MEM alignment to the reference genome
+#   3. Sorting of BAM files using samtools
+#   4. GATK MarkDuplicates for duplicate marking
+#   5. BAM indexing (samtools)
+#   6. GATK HaplotypeCaller in GVCF mode
 #
-# WARNING: This script GENERATES job scripts; it does not submit them.
-# WARNING: Multithreaded
+# Notes:
+# - This script ONLY generates job scripts; it does NOT submit them.
+# - Scripts are multithreaded where possible (BWA, samtools).
+# - Output directories (BAM, VCF, intermediate, scripts) are automatically created.
+# - User should edit only the top USER CONFIGURATION section:
+#     PARENT_DIR, REFERENCE_GENOME, THREADS, JAVA_MEM
 ###############################################################################
 
-########################
 # USER CONFIGURATION
-########################
 
 PARENT_DIR="<INPUT>"          # Directory containing one subfolder per sample
 REFERENCE_GENOME="<INPUT>"    # Reference genome FASTA
@@ -25,9 +28,7 @@ REFERENCE_GENOME="<INPUT>"    # Reference genome FASTA
 THREADS=4
 JAVA_MEM="80G"
 
-########################
 # DERIVED DIRECTORIES
-########################
 
 OUTPUT_DIR="$(dirname "$PARENT_DIR")"
 
