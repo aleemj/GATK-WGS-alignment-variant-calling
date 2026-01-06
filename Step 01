@@ -45,7 +45,7 @@ for SAMPLE_DIR in "$PARENT_DIR"/*; do
         echo "cat $SAMPLE_DIR/*_2.fq.gz > $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz"
 
         # Properly quoted bwa mem line
-        echo "bwa mem -t 4 -R \"@RG\tID:${SAMPLE_NAME}\tSM:${SAMPLE_NAME}\tPL:ILLUMINA\" $REFERENCE_GENOME $INTERMEDIATE_DIR/${SAMPLE_NAME}_R1.fq.gz $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz | samtools sort --threads 4 -o $BAM_DIR/${SAMPLE_NAME}.bam"
+        echo "bwa mem -t 4 -R \"@RG\tID:${SAMPLE_NAME}\tSM:${SAMPLE_NAME}\tPL:ILLUMINA\" $REFERENCE_GENOME $INTERMEDIATE_DIR/${SAMPLE_NAME}_R1.fq.gz $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz | samtools sort -@ 4 -o $BAM_DIR/${SAMPLE_NAME}.bam"
 		
         # Index BAM and run GATK
         echo "samtools index $BAM_DIR/${SAMPLE_NAME}.bam"
