@@ -1,11 +1,13 @@
-################Step 2: Submit Jobs################
-#Function: This script submits jobs for each sample, ensuring that VCF files are only processed if they don’t already exist.
+#===============================================================================
+# Step 2: Submit Jobs for Each Sample
+# Function: Submit jobs for samples, skipping those whose VCF already exists.
+#===============================================================================
 
 #!/bin/bash
 
-# Define the directories
-SH_DIR=<INPUT> #IMPT TO CHANGE - folder where samples sh files are contained 
-BAM_DIR=<INPUT> #IMPT TO CHANGE - folder where individual bam files are
+# ---------------- User-defined directories ----------------
+SH_DIR="<INPUT_SH_DIR>"      # Folder containing per-sample .sh scripts
+BAM_DIR="<INPUT_BAM_DIR>"    # Folder where VCFs are generated
 
 # Change to the SH_DIR directory
 cd "$SH_DIR" || { echo "Failed to change directory to $SH_DIR"; exit 1; }
@@ -23,6 +25,6 @@ for sh_file in "${sh_files[@]}"; do
         echo "Submitting job: $sh_file"
         qsub "$sh_file"
     else
-        echo "vcf file already exists for sample: $sample_name, skipping..."
+        echo "vcf file already exists / in process for sample: $sample_name, skipping..."
     fi
 done
