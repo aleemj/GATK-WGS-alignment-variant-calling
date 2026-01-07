@@ -87,3 +87,12 @@ Edit user defined variables (paths, memory, threads, output names) before runnin
 Steps 2 and 3 are resource intensive; monitor memory and walltime
 
 Downstream tools (GWAS, annotation) require indexed VCFs
+
+Helpful Resources:
+--------------------------------------------------------------------------------------------
+1. https://ngs101.com/how-to-analyze-whole-genome-sequencing-data-for-absolute-beginners-part-1-from-raw-reads-to-high-quality-variants-using-gatk/
+2. https://gatk.broadinstitute.org/hc/en-us/articles/360035535912-Data-pre-processing-for-variant-discovery
+3. https://gatk.broadinstitute.org/hc/en-us/articles/360035535932-Germline-short-variant-discovery-SNPs-Indels
+4. https://gatk.broadinstitute.org/hc/en-us/articles/360035890431-The-logic-of-joint-calling-for-germline-short-variants
+5. https://hpc.nih.gov/training/gatk_tutorial/
+
