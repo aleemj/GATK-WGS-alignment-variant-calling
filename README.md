@@ -80,4 +80,7 @@ Helpful Resources:
 3. https://gatk.broadinstitute.org/hc/en-us/articles/360035535932-Germline-short-variant-discovery-SNPs-Indels
 4. https://gatk.broadinstitute.org/hc/en-us/articles/360035890431-The-logic-of-joint-calling-for-germline-short-variants
 5. https://hpc.nih.gov/training/gatk_tutorial/
+6. Van der Auwera GA & O'Connor BD. (2020). Genomics in the Cloud: Using Docker, GATK, and WDL in Terra (1st Edition). O'Reilly Media.
+![Uploading image.png…]()
+
 
