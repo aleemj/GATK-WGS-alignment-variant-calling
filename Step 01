@@ -44,6 +44,7 @@ module load bwa gatk
 
 # BWA index if missing
 [ ! -f "${REFERENCE_GENOME}.bwt" ] && bwa index "$REFERENCE_GENOME"
+[ ! -f "${REFERENCE_GENOME}.dict" ] gatk CreateSequenceDictionary R="$REFERENCE_GENOME" 
 
 # Loop through subdirectories
 for SAMPLE_DIR in "$PARENT_DIR"/*; do
