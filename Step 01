@@ -40,6 +40,8 @@ TMP_DIR="$BAM_DIR/tmp"
 
 mkdir -p "$BAM_DIR" "$VCF_DIR" "$INTERMEDIATE_DIR" "$SH_DIR" "$TMP_DIR"
 
+module load bwa gatk
+
 # BWA index if missing
 [ ! -f "${REFERENCE_GENOME}.bwt" ] && bwa index "$REFERENCE_GENOME"
 
