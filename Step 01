@@ -69,8 +69,8 @@ for SAMPLE_DIR in "$PARENT_DIR"/*; do
         echo "cat $SAMPLE_DIR/*_2.fq.gz > $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz"
 
         # bwa mem alignment
-		echo "bwa mem -t ${THREADS} -R \"@RG\\tID:${SAMPLE_NAME}\\tSM:${SAMPLE_NAME}\\tPL:ILLUMINA\\tLB:${SAMPLE_NAME}_lib\" $REFERENCE_GENOME $INTERMEDIATE_DIR/${SAMPLE_NAME}_R1.fq.gz $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz | samtools sort --threads ${THREADS} -o $BAM_DIR/${SAMPLE_NAME}.bam"
-		
+		echo "bwa mem -t ${THREADS} -R \"@RG\tID:${SAMPLE_NAME}\tSM:${SAMPLE_NAME}\tPL:ILLUMINA\tLB:${SAMPLE_NAME}_lib\" $REFERENCE_GENOME $INTERMEDIATE_DIR/${SAMPLE_NAME}_R1.fq.gz $INTERMEDIATE_DIR/${SAMPLE_NAME}_R2.fq.gz | samtools sort --threads ${THREADS} -o $BAM_DIR/${SAMPLE_NAME}.bam"
+
         # Index BAM and run GATK
         echo "gatk MarkDuplicates --java-options \"-Xmx${JAVA_MEM}\" -I $BAM_DIR/${SAMPLE_NAME}.bam -O $BAM_DIR/${SAMPLE_NAME}.md.bam -M $BAM_DIR/${SAMPLE_NAME}.metrics.txt --TMP_DIR $BAM_DIR/tmp"
         echo "samtools --threads ${THREADS} index $BAM_DIR/${SAMPLE_NAME}.md.bam"
