@@ -38,7 +38,7 @@ INTERMEDIATE_DIR="$OUTPUT_DIR/intermediate_files"
 SH_DIR="$OUTPUT_DIR/sh_files"
 TMP_DIR="$BAM_DIR/tmp"
 
-module load bwa gatk samtools
+module load bwa gatk samtools python
 
 mkdir -p "$BAM_DIR" "$VCF_DIR" "$INTERMEDIATE_DIR" "$SH_DIR" "$TMP_DIR"
 
@@ -63,7 +63,7 @@ for SAMPLE_DIR in "$PARENT_DIR"/*; do
         echo "#PBS -P Personal"
 
         echo "set -euo pipefail"
-        echo "module load bwa samtools bcftools gatk"
+        echo "module load bwa samtools bcftools gatk python"
 
         # Safe concatenation
         echo "cat $SAMPLE_DIR/*_1.fq.gz > $INTERMEDIATE_DIR/${SAMPLE_NAME}_R1.fq.gz"
