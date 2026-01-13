@@ -38,13 +38,14 @@ INTERMEDIATE_DIR="$OUTPUT_DIR/intermediate_files"
 SH_DIR="$OUTPUT_DIR/sh_files"
 TMP_DIR="$BAM_DIR/tmp"
 
-module load bwa gatk
+module load bwa gatk samtools
 
 mkdir -p "$BAM_DIR" "$VCF_DIR" "$INTERMEDIATE_DIR" "$SH_DIR" "$TMP_DIR"
 
 # BWA index if missing
 [ ! -f "${REFERENCE_GENOME}.bwt" ] && bwa index "$REFERENCE_GENOME"
 [ ! -f "${REFERENCE_GENOME}.dict" ] && gatk CreateSequenceDictionary R="$REFERENCE_GENOME" 
+[ ! -f "${REFERENCE_GENOME}.fai" ] && samtools faidx "$REFERENCE_GENOME"
 
 # Loop through subdirectories
 for SAMPLE_DIR in "$PARENT_DIR"/*; do
