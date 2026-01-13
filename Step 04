@@ -13,7 +13,7 @@
 #PBS -P Personal
 
 set -euo pipefail
-module load gatk bcftools
+module load gatk bcftools python
 
 # ---------------- User-defined variables ----------------
 JAVA_MEM="80G"
