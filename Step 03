@@ -17,7 +17,7 @@
 #PBS -P Personal
 
 set -euo pipefail
-module load gatk bcftools
+module load gatk bcftools python
 
 JAVA_MEM=80G
 THREADS=2
