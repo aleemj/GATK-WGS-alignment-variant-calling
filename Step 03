@@ -11,7 +11,7 @@
 # - REF_INTERVALS should be a line-separated list of scaffolds/chromosomes
 
 #PBS -q normal
-#PBS -l select=1:ncpus=24:mem=100G
+#PBS -l select=1:ncpus=2:mem=100G
 #PBS -l walltime=24:00:00
 #PBS -N JointGenotyping
 #PBS -P Personal
@@ -21,7 +21,7 @@ module load gatk bcftools python
 
 # Increase threads if the cluster allows; GenomicsDBImport scales well
 JAVA_MEM="80G"
-THREADS=12 
+THREADS=2 
 
 # ---------------- User-defined paths ----------------
 REF="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/Arugula_ref_gen_V2/E_sativa.genome.final.fa"
