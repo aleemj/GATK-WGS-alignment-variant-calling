@@ -2,9 +2,11 @@
 
 Pipeline for whole genome sequencing (WGS) alignment and variant calling using GATK software
 
-#Last updated by Adrian on 6 January 2026
+#Last updated by Adrian on 20 January 2026
 
 --------------------------------------------------------------------------------------------
+Consider BWA-MEM2 as more efficient version of BWA, https://github.com/bwa-mem2/bwa-mem2.git. 
+Vasimuddin Md, Sanchit Misra, Heng Li, Srinivas Aluru. Efficient Architecture-Aware Acceleration of BWA-MEM for Multicore Systems. IEEE Parallel and Distributed Processing Symposium (IPDPS), 2019. 10.1109/IPDPS.2019.00041
 
 Overview
 --------------------------------------------------------------------------------------------
