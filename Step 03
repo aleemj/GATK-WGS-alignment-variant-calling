@@ -26,7 +26,7 @@ THREADS=2
 # ---------------- User-defined paths ----------------
 REF="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/Arugula_ref_gen_V2/E_sativa.genome.final.fa"
 REF_INTERVALS="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/intervals.list"
-VCF_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/gvcf_files"
+VCF_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/vcf_files"
 DB_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/genomics_db"
 OUT_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/final_vcf"
 OUT_VCF="$OUT_DIR/Arugula_JointGenotyped.vcf.gz"
@@ -36,14 +36,12 @@ mkdir -p "$OUT_DIR"
 # ---------------- Create sample map ----------------
 SAMPLE_MAP="$VCF_DIR/sample_map.txt"
 rm -f "$SAMPLE_MAP"
-# FIXED: Added space and newline for the loop
 for gvcf in "$VCF_DIR"/*.g.vcf.gz; do
     sample=$(basename "$gvcf" .g.vcf.gz)
     echo -e "${sample}\t${gvcf}" >> "$SAMPLE_MAP"
 done
 
 # ---------------- GenomicsDB Import ----------------
-# FIXED: Added missing backslashes (\) to connect lines
 gatk --java-options "-Xmx$JAVA_MEM -Xms$JAVA_MEM" GenomicsDBImport \
   --sample-name-map "$SAMPLE_MAP" \
   --genomicsdb-workspace-path "$DB_DIR" \
