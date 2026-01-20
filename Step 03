@@ -1,4 +1,4 @@
-################ Step X: Joint Genotyping ################
+################ Step 3: Joint Genotyping ################
 # Function: This script performs joint genotyping on a set of GVCFs.
 # It first creates a sample map from the input GVCFs, imports them 
 # into a GenomicsDB workspace using GATK GenomicsDBImport, and then 
@@ -11,7 +11,7 @@
 # - REF_INTERVALS should be a line-separated list of scaffolds/chromosomes
 
 #PBS -q normal
-#PBS -l select=1:ncpus=2:mem=100G
+#PBS -l select=1:ncpus=24:mem=100G
 #PBS -l walltime=24:00:00
 #PBS -N JointGenotyping
 #PBS -P Personal
@@ -19,40 +19,41 @@
 set -euo pipefail
 module load gatk bcftools python
 
-JAVA_MEM=80G
-THREADS=2
+# Increase threads if the cluster allows; GenomicsDBImport scales well
+JAVA_MEM="80G"
+THREADS=12 
 
 # ---------------- User-defined paths ----------------
-REF="<PATH_TO_REFERENCE_fa>"
-REF_INTERVALS="<PATH_TO_INTERVALS_LIST>"  # scaffolds/chromosomes, separately one must create a txt file (line separated) with list of scaffols/chromosmes in ref
-VCF_DIR="<PATH_TO_VCF_DIR>"
-DB_DIR="<PATH_TO_GENOMICSDB_WORKSPACE>" #must point to a non-existent or empty directory, unless adding new samples to an existing database
-OUT_DIR="<PATH_TO_OUTPUT_VCF>"
-OUT_VCF="$OUT_DIR/<OUTPUTNAME>.vcf.gz"
+REF="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/Arugula_ref_gen_V2/E_sativa.genome.final.fa"
+REF_INTERVALS="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/intervals.list"
+VCF_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/gvcf_files"
+DB_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/genomics_db"
+OUT_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/final_vcf"
+OUT_VCF="$OUT_DIR/Arugula_JointGenotyped.vcf.gz"
 
 mkdir -p "$OUT_DIR"
 
 # ---------------- Create sample map ----------------
 SAMPLE_MAP="$VCF_DIR/sample_map.txt"
-rm -f "$SAMPLE_MAP"for gvcf in $VCF_DIR/*.g.vcf.gz
-do
+rm -f "$SAMPLE_MAP"
+# FIXED: Added space and newline for the loop
+for gvcf in "$VCF_DIR"/*.g.vcf.gz; do
     sample=$(basename "$gvcf" .g.vcf.gz)
-    echo -e "${sample}\t${gvcf}" >> $SAMPLE_MAP
+    echo -e "${sample}\t${gvcf}" >> "$SAMPLE_MAP"
 done
 
 # ---------------- GenomicsDB Import ----------------
-gatk GenomicsDBImport \
-  --java-options "-Xmx$JAVA_MEM" \
+# FIXED: Added missing backslashes (\) to connect lines
+gatk --java-options "-Xmx$JAVA_MEM -Xms$JAVA_MEM" GenomicsDBImport \
   --sample-name-map "$SAMPLE_MAP" \
   --genomicsdb-workspace-path "$DB_DIR" \
-# --genomicsdb-update-workspace-path \ #use this instead if adding new samples
   -L "$REF_INTERVALS" \
   --reader-threads "$THREADS" \
-  --merge-input-intervals
+  --merge-input-intervals \
   --batch-size 50
 
-gatk GenotypeGVCFs \
-  --java-options "-Xmx80G" \
-  -R $REF \
-  -V gendb://$DB_DIR \
+# ---------------- GenotypeGVCFs ----------------
+gatk --java-options "-Xmx$JAVA_MEM" GenotypeGVCFs \
+  -R "$REF" \
+  -V "gendb://$DB_DIR" \
   -O "$OUT_VCF"
