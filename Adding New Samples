@@ -33,30 +33,45 @@ SAMPLE_MAP=<USER INPUT>
 OUT_VCF=<USER INPUT>
 NEW_SAMPLE_MAP=<USER INPUT NEW SAMPLES ONLY>
 
-# Parallel Loop to UPDATE each chunk
+# ---------------- Parallel Update Loop ----------------
 for i in {0000..0009}; do
     (
     CURRENT_DB="$DB_DIR/db_chunk_${i}"
+    INTERVAL_FILE="$INTERVALS_DIR/${i}-scattered.interval_list"
     
-    # Check if DB exists before updating
     if [ -d "$CURRENT_DB" ]; then
-        echo "Updating chunk ${i}..."
-        gatk --java-options "-Xmx$PROC_MEM" GenomicsDBImport \
+        echo "Updating chunk ${i} at $(date)..."
+        
+        # NOTE: -L is required even when updating!
+        gatk --java-options "-Xmx$PROC_MEM -Xms$PROC_MEM" GenomicsDBImport \
           --sample-name-map "$NEW_SAMPLE_MAP" \
           --genomicsdb-update-workspace-path "$CURRENT_DB" \
+          -L "$INTERVAL_FILE" \
           --reader-threads 1 \
           --batch-size 50
-          
-        # 3. Re-run Genotyping for the expanded cohort
+
+        echo "Genotyping chunk ${i} at $(date)..."
         gatk --java-options "-Xmx$PROC_MEM" GenotypeGVCFs \
           -R "$REF" \
           -V "gendb://$CURRENT_DB" \
-          -O "$OUT_DIR/new_combined_part_${i}.vcf.gz"
+          -L "$INTERVAL_FILE" \
+          -O "$OUT_DIR/part_updated_${i}.vcf.gz"
+          
     else
-        echo "Error: Base DB chunk ${i} not found!"
+        echo "Error: Base DB chunk ${i} not found at $CURRENT_DB!"
+        exit 1
     fi
     ) & 
     sleep 10
 done
 
 wait
+
+# ---------------- Final Merge ----------------
+echo "Merging updated VCF fragments..."
+ls "$OUT_DIR"/part_updated_*.vcf.gz > updated_vcf.list
+gatk GatherVcfs \
+  -I updated_vcf.list \
+  -O "$OUT_DIR/${OUT_VCF_NAME}.vcf.gz"
+
+echo "Process Complete."
