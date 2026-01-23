@@ -1,9 +1,39 @@
-# ... (same paths and PBS headers as before) ...
+################ Adding New Samples ################
+# Function: This script performs joint genotyping when adding new GVCF files.
+# into an existing GenomicsDB workspace using GATK GenomicsDBImport, and then 
+# generates a joint VCF using GenotypeGVCFs.
+# Parellel runs 10 jobs to speed up process -> chunks
 
-# 1. New Sample Map (only new samples!)
-NEW_SAMPLE_MAP="$VCF_DIR/new_samples_map.txt"
+# User should edit the variables at the top:
+# REF, INTERVALS_DIR, VCF_DIR, DB_DIR, OUT_DIR, OUT_VCF, PROC_MEM, CHUNKS
+# Notes:
+# - DB_DIR should be an existing workspace
+# - REF_INTERVALS should be a line-separated list of scaffolds/chromosomes
 
-# 2. Parallel Loop to UPDATE each chunk
+#PBS -q normal
+#PBS -l select=1:ncpus=10:mem=100G
+#PBS -l walltime=72:00:00
+#PBS -N JointGenotyping_Fast
+#PBS -P Personal
+
+set -euo pipefail
+module load gatk samtools python
+
+# Memory per process (8GB x 10 parallel tasks = 80GB)
+PROC_MEM="8G"
+CHUNKS=10
+
+# ---------------- Paths ----------------
+REF=<USER INPUT>
+VCF_DIR=<USER INPUT>
+DB_DIR=<USER INPUT>
+OUT_DIR=<USER INPUT>
+INTERVALS_DIR=<USER INPUT>
+SAMPLE_MAP=<USER INPUT>
+OUT_VCF=<USER INPUT>
+NEW_SAMPLE_MAP=<USER INPUT NEW SAMPLES ONLY>
+
+# Parallel Loop to UPDATE each chunk
 for i in {0000..0009}; do
     (
     CURRENT_DB="$DB_DIR/db_chunk_${i}"
