@@ -3,55 +3,78 @@
 # It first creates a sample map from the input GVCFs, imports them 
 # into a GenomicsDB workspace using GATK GenomicsDBImport, and then 
 # generates a joint VCF using GenotypeGVCFs.
+# Parellel runs 10 jobs to speed up process -> chunks
+
 # User should edit the variables at the top:
-# REF, REF_INTERVALS, VCF_DIR, DB_DIR, OUT_DIR, OUT_VCF, JAVA_MEM, THREADS
+# REF, INTERVALS_DIR, VCF_DIR, DB_DIR, OUT_DIR, OUT_VCF, PROC_MEM, CHUNKS
 # Notes:
 # - DB_DIR should be empty for a new GenomicsDB workspace
 # - Use --genomicsdb-update-workspace-path to add new samples later
 # - REF_INTERVALS should be a line-separated list of scaffolds/chromosomes
 
 #PBS -q normal
-#PBS -l select=1:ncpus=2:mem=100G
+#PBS -l select=1:ncpus=10:mem=100G
 #PBS -l walltime=72:00:00
-#PBS -N JointGenotyping
+#PBS -N JointGenotyping_Fast
 #PBS -P Personal
 
 set -euo pipefail
-module load gatk bcftools python
+module load gatk samtools python
 
-# Increase threads if the cluster allows; GenomicsDBImport scales well
-JAVA_MEM="80G"
-THREADS=2 
+# Memory per process (8GB x 10 parallel tasks = 80GB)
+PROC_MEM="8G"
+CHUNKS=10
 
-# ---------------- User-defined paths ----------------
-REF="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/Arugula_ref_gen_V2/E_sativa.genome.final.fa"
-REF_INTERVALS="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/intervals.list"
-VCF_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/vcf_files"
-DB_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/genomics_db"
-OUT_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/final_vcf"
-OUT_VCF="$OUT_DIR/Arugula_JointGenotyped.vcf.gz"
+# ---------------- Paths ----------------
+REF=<USER INPUT>
+VCF_DIR=<USER INPUT>
+DB_DIR=<USER INPUT>
+OUT_DIR=<USER INPUT>
+INTERVALS_DIR=<USER INPUT>
+SAMPLE_MAP=<USER INPUT>
+OUT_VCF=<USER INPUT>
+#rm -f "$SAMPLE_MAP"
+#for gvcf in "$VCF_DIR"/*.g.vcf.gz; do
+#    sample=$(basename "$gvcf" .g.vcf.gz)
+#    echo -e "${sample}\t${gvcf}" >> "$SAMPLE_MAP"
+#done
 
-mkdir -p "$OUT_DIR"
+mkdir -p "$OUT_DIR" "$INTERVALS_DIR" "$DB_DIR"
 
-# ---------------- Create sample map ----------------
-SAMPLE_MAP="$VCF_DIR/sample_map.txt"
-rm -f "$SAMPLE_MAP"
-for gvcf in "$VCF_DIR"/*.g.vcf.gz; do
-    sample=$(basename "$gvcf" .g.vcf.gz)
-    echo -e "${sample}\t${gvcf}" >> "$SAMPLE_MAP"
+# 1. Split the genome into chunks
+gatk SplitIntervals -R "$REF" \
+  -L "/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/arugula_intervals.list" \
+  --scatter-count $CHUNKS -O "$INTERVALS_DIR"
+
+# 2. Parallel Loop for DB Import AND Genotyping
+for i in {0000..0009}; do
+    (
+    # Create a unique database for this chunk
+    CURRENT_DB="$DB_DIR/db_chunk_${i}"
+    rm -rf "$CURRENT_DB"
+    
+    # Import ONLY this chunk
+    gatk --java-options "-Xmx$PROC_MEM" GenomicsDBImport \
+      --sample-name-map "$SAMPLE_MAP" \
+      --genomicsdb-workspace-path "$CURRENT_DB" \
+      -L "$INTERVALS_DIR/${i}-scattered.interval_list" \
+      --reader-threads 1 \
+      --batch-size 50
+
+    # Genotype ONLY this chunk
+    gatk --java-options "-Xmx$PROC_MEM" GenotypeGVCFs \
+      -R "$REF" \
+      -V "gendb://$CURRENT_DB" \
+      -O "$OUT_DIR/part_${i}.vcf.gz"
+      
+    # Clean up the DB to save disk space
+    rm -rf "$CURRENT_DB" 
+    ) & 
 done
 
-# ---------------- GenomicsDB Import ----------------
-gatk --java-options "-Xmx$JAVA_MEM -Xms$JAVA_MEM" GenomicsDBImport \
-  --sample-name-map "$SAMPLE_MAP" \
-  --genomicsdb-workspace-path "$DB_DIR" \
-  -L "$REF_INTERVALS" \
-  --reader-threads "$THREADS" \
-  --merge-input-intervals \
-  --batch-size 50
+wait
 
-# ---------------- GenotypeGVCFs ----------------
-gatk --java-options "-Xmx$JAVA_MEM" GenotypeGVCFs \
-  -R "$REF" \
-  -V "gendb://$DB_DIR" \
-  -O "$OUT_VCF"
+# 3. Merge the resulting VCFs
+gatk GatherVcfs \
+  -I $(ls "$OUT_DIR"/part_*.vcf.gz | sed 's/^/-I /') \
+  -O "$OUT_DIR/$OUT_VCF.vcf.gz"
