@@ -1,0 +1,32 @@
+# ... (same paths and PBS headers as before) ...
+
+# 1. New Sample Map (only new samples!)
+NEW_SAMPLE_MAP="$VCF_DIR/new_samples_map.txt"
+
+# 2. Parallel Loop to UPDATE each chunk
+for i in {0000..0009}; do
+    (
+    CURRENT_DB="$DB_DIR/db_chunk_${i}"
+    
+    # Check if DB exists before updating
+    if [ -d "$CURRENT_DB" ]; then
+        echo "Updating chunk ${i}..."
+        gatk --java-options "-Xmx$PROC_MEM" GenomicsDBImport \
+          --sample-name-map "$NEW_SAMPLE_MAP" \
+          --genomicsdb-update-workspace-path "$CURRENT_DB" \
+          --reader-threads 1 \
+          --batch-size 50
+          
+        # 3. Re-run Genotyping for the expanded cohort
+        gatk --java-options "-Xmx$PROC_MEM" GenotypeGVCFs \
+          -R "$REF" \
+          -V "gendb://$CURRENT_DB" \
+          -O "$OUT_DIR/new_combined_part_${i}.vcf.gz"
+    else
+        echo "Error: Base DB chunk ${i} not found!"
+    fi
+    ) & 
+    sleep 10
+done
+
+wait
