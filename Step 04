@@ -1,5 +1,5 @@
-################ Step X: Filter Variants ################
-# Function: This script splits a joint VCF into SNPs and INDELs,
+################ Step 4: Gather Genotypes and Filter Variants ################
+# Function: This script combines the individual VCF chunks and splits a joint VCF into SNPs and INDELs,
 # applies hard filtering according to GATK best practices,
 # and outputs PASS-only VCFs ready for downstream analysis.
 # User only needs to edit the variables at the top:
@@ -29,6 +29,17 @@ SNP="$OUT_DIR/$OUTPUTNAME.SNP.vcf.gz"
 SNP_PASS="$OUT_DIR/$OUTPUTNAME.SNP.PASS.vcf.gz"
 INDEL="$OUT_DIR/$OUTPUTNAME.INDEL.vcf.gz"
 INDEL_PASS="$OUT_DIR/$OUTPUTNAME.INDEL.PASS.vcf.gz"
+
+# Create a list of all part files in order
+ls ${VCF_DIR}/part_*.vcf.gz > input_vcfs.list
+
+# Gather into one final file
+gatk --java-options "-Xmx16G" GatherVCFs \
+    -I input_vcfs.list \
+    -O ${VCF_DIR}/{$OUTPUTNAME}.vcf.gz
+
+# Index the final file
+gatk IndexFeatureFile -I ${VCF_DIR}/{$OUTPUTNAME}.vcf.gz
 
 # ------------------
 # Split SNPs
