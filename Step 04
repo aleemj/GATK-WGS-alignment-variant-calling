@@ -27,9 +27,12 @@ NAME=<USER INPUT>
 ls ${VCF_DIR}/part_*.vcf.gz > input_vcfs.list
 
 # Gather into one final file
-gatk --java-options "-Xmx16G" GatherVCFs \
+gatk --java-options "-Xmx80G" GatherVCFs \
     -I input_vcfs.list \
     -O ${VCF_DIR}/{$OUTPUTNAME}.vcf.gz
+
+# ---------------- Index VCF ----------------
+gatk IndexFeatureFile -I $VCF_IN
 
 # ---------------- SNPs: Select, Filter, and Clean ----------------
 # 1. Extract SNPs only
