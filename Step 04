@@ -32,6 +32,11 @@ gatk --java-options "-Xmx80G" GatherVCFs \
     -O ${VCF_DIR}/{$OUTPUTNAME}.vcf.gz
 
 # ---------------- Index VCF ----------------
+bcftools sort \
+  -Oz \
+  -o $OUT_DIR/$NAME.sorted.vcf.gz \
+  $OUT_DIR/$NAME
+
 bcftools index -t $VCF_IN
 
 # ---------------- SNPs: Select, Filter, and Clean ----------------
