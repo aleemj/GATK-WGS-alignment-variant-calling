@@ -68,3 +68,6 @@ EOT
 done
 
 echo "Success: Created 100 jobs in 'jobs/' folder."
+
+#submit all the scripts 
+#for script in jobs/*.sh; do qsub $script; done
