@@ -13,22 +13,15 @@
 #PBS -P Personal
 
 set -euo pipefail
-module load gatk bcftools python
+module load gatk bcftools python samtools
 
 # ---------------- User-defined variables ----------------
-JAVA_MEM="80G"
 THREADS=1
-
-REF="<IPNUT_REFERENCE_fa>"
-VCF_IN="<IMPUT_COMPILED_VCF.GZ>"
-OUT_DIR="<INPUT_OUTPUT_DIR>"
-OUTPUTNAME="<INPUT_OUTPUT_NAME>"
-
-# Output filenames
-SNP="$OUT_DIR/$OUTPUTNAME.SNP.vcf.gz"
-SNP_PASS="$OUT_DIR/$OUTPUTNAME.SNP.PASS.vcf.gz"
-INDEL="$OUT_DIR/$OUTPUTNAME.INDEL.vcf.gz"
-INDEL_PASS="$OUT_DIR/$OUTPUTNAME.INDEL.PASS.vcf.gz"
+JAVA_MEM="80G"
+REF=<USER INPUT>
+VCF_IN=<USER INPUT>
+OUT_DIR=<USER INPUT>
+NAME=<USER INPUT>
 
 # Create a list of all part files in order
 ls ${VCF_DIR}/part_*.vcf.gz > input_vcfs.list
@@ -38,54 +31,38 @@ gatk --java-options "-Xmx16G" GatherVCFs \
     -I input_vcfs.list \
     -O ${VCF_DIR}/{$OUTPUTNAME}.vcf.gz
 
-# Index the final file
-gatk IndexFeatureFile -I ${VCF_DIR}/{$OUTPUTNAME}.vcf.gz
+# ---------------- SNPs: Select, Filter, and Clean ----------------
+# 1. Extract SNPs only
+gatk SelectVariants -R $REF -V $VCF_IN --select-type-to-include SNP -O $OUT_DIR/$NAME.raw_snps.vcf.gz
 
-# ------------------
-# Split SNPs
-# ------------------
-gatk SelectVariants \
-  --java-options "-Xmx$JAVA_MEM" \
-  -R $REF \
-  -V $VCF_IN \
-  --select-type-to-include SNP \
-  -O $SNP
+# 2. Apply Filter Tags
+gatk VariantFiltration -R $REF -V $OUT_DIR/$NAME.raw_snps.vcf.gz \
+  --filter-name "QD2" --filter-expression "QD < 2.0" \
+  --filter-name "FS60" --filter-expression "FS > 60.0" \
+  --filter-name "MQ40" --filter-expression "MQ < 40.0" \
+  --filter-name "SOR3" --filter-expression "SOR > 3.0" \
+  --filter-name "MQRS-12.5" --filter-expression "MQRankSum < -12.5" \
+  --filter-name "RPRS-8" --filter-expression "ReadPosRankSum < -8.0" \
+  -O $OUT_DIR/$NAME.tagged_snps.vcf.gz
 
-# Hard filter SNPs
-gatk VariantFiltration \
-  --java-options "-Xmx$JAVA_MEM" \
-  -R $REF \
-  -V $SNP \
-  --filter-name "QD_lt_2" --filter-expression "QD < 2.0" \
-  --filter-name "FS_gt_60" --filter-expression "FS > 60.0" \
-  --filter-name "MQ_lt_40" --filter-expression "MQ < 40.0" \
-  --filter-name "SOR_gt_3" --filter-expression "SOR > 3.0" \
-  --filter-name "MQRankSum_lt_-12.5" --filter-expression "MQRankSum < -12.5" \
-  --filter-name "ReadPosRankSum_lt_-8" --filter-expression "ReadPosRankSum < -8.0" \
-  -O $SNP_PASS
+# 3. Keep only PASSing variants (Removes tagged ones)
+bcftools view -f PASS $OUT_DIR/$NAME.tagged_snps.vcf.gz -Oz -o $OUT_DIR/$NAME.SNP.PASS.vcf.gz
 
-# ------------------
-# Split INDELs
-# ------------------
-gatk SelectVariants \
-  --java-options "-Xmx$JAVA_MEM" \
-  -R $REF \
-  -V $VCF_IN \
-  --select-type-to-include INDEL \
-  -O $INDEL
+# ---------------- Indels: Select, Filter, and Clean ----------------
+# 1. Extract Indels only
+gatk SelectVariants -R $REF -V $VCF_IN --select-type-to-include INDEL -O $OUT_DIR/$NAME.raw_indels.vcf.gz
 
-# Hard filter INDELs
-gatk VariantFiltration \
-  --java-options "-Xmx$JAVA_MEM" \
-  -R $REF \
-  -V $INDEL \
-  --filter-name "QD_lt_2" --filter-expression "QD < 2.0" \
-  --filter-name "FS_gt_200" --filter-expression "FS > 200.0" \
-  --filter-name "SOR_gt_10" --filter-expression "SOR > 10.0" \
-  --filter-name "ReadPosRankSum_lt_-20" --filter-expression "ReadPosRankSum < -20.0" \
-  -O $INDEL_PASS
+# 2. Apply Filter Tags
+gatk VariantFiltration -R $REF -V $OUT_DIR/$NAME.raw_indels.vcf.gz \
+  --filter-name "QD2" --filter-expression "QD < 2.0" \
+  --filter-name "FS200" --filter-expression "FS > 200.0" \
+  --filter-name "SOR10" --filter-expression "SOR > 10.0" \
+  --filter-name "RPRS-20" --filter-expression "ReadPosRankSum < -20.0" \
+  -O $OUT_DIR/$NAME.tagged_indels.vcf.gz
 
-$index files
-bcftools index -f "$SNP_PASS"
-bcftools index -f "$INDEL_PASS"
+# 3. Keep only PASSing variants
+bcftools view -f PASS $OUT_DIR/$NAME.tagged_indels.vcf.gz -Oz -o $OUT_DIR/$NAME.INDEL.PASS.vcf.gz
 
+# Index final outputs
+bcftools index -t $OUT_DIR/$NAME.SNP.PASS.vcf.gz
+bcftools index -t $OUT_DIR/$NAME.INDEL.PASS.vcf.gz
