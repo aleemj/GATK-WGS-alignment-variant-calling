@@ -1,1 +1,66 @@
+#!/bin/bash
+# Configuration
+REF=<USER INPUT>
+SAMPLE_MAP_NEW=<USER INPUT>   # ONLY NEW SAMPLES
+INTERVALS_OUT=<USER INPUT>    # MUST be SAME as previous run
+DB_BASE=<USER INPUT>
+VCF_OUT=<USER INPUT>
+CHUNKS=<USER INPUT>           # should match existing DB count
 
+mkdir -p jobs logs "$VCF_OUT"
+
+# ❌ DO NOT regenerate intervals
+# gatk SplitIntervals ...
+
+# 2. Generate PBS scripts
+for i in $(seq 0 $((CHUNKS-1)))
+do
+    CHUNK_ID=$(printf "%04d" $i)
+    SCRIPT="jobs/update_gatk_${CHUNK_ID}.sh"
+
+    cat <<EOT > $SCRIPT
+#!/bin/bash
+#PBS -q normal
+#PBS -l select=1:ncpus=2:mem=100G
+#PBS -l walltime=72:00:00
+#PBS -N UpdateGenotyping_${CHUNK_ID}
+#PBS -e logs/${CHUNK_ID}.err
+#PBS -o logs/${CHUNK_ID}.out
+
+cd \$PBS_O_WORKDIR
+
+DB_PATH=${DB_BASE}/db_chunk_${CHUNK_ID}
+
+# 🚨 Safety check
+if [ ! -d "\$DB_PATH" ]; then
+    echo "ERROR: DB chunk ${CHUNK_ID} does not exist. Cannot update."
+    exit 1
+fi
+
+echo "Updating DB chunk ${CHUNK_ID}"
+
+# GenomicsDB UPDATE (only new samples)
+gatk --java-options "-Xmx16G" GenomicsDBImport \\
+    --genomicsdb-update-workspace-path \$DB_PATH \\
+    --batch-size 50 \\
+    -L ${INTERVALS_OUT}/${CHUNK_ID}-scattered.interval_list \\
+    --sample-name-map ${SAMPLE_MAP_NEW} \\
+    --reader-threads 2
+
+echo "Running GenotypeGVCFs for chunk ${CHUNK_ID}"
+
+# Genotype full cohort (old + new)
+gatk --java-options "-Xmx48G" GenotypeGVCFs \\
+    -R ${REF} \\
+    -V gendb://\$DB_PATH \\
+    -O ${VCF_OUT}/part_${CHUNK_ID}.vcf.gz
+
+EOT
+
+    chmod +x $SCRIPT
+done
+
+echo "Success: Created update jobs in 'jobs/' folder."
+
+# Submit
+# for script in jobs/*.sh; do qsub $script; done
