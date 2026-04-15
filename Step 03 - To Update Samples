@@ -1,8 +1,23 @@
+################ Step 3: Joint Genotyping - UPDATING SAMPLES ################
+# Function: This script performs joint genotyping on an updated set of GVCFs when one wants to ADD new samples to previous GenomicsDB.
+# It utilises a sample map with new sample GVCFs, imports them 
+# into previous GenomicsDB workspace using GATK --genomicsdb-update-workspace-path, and then 
+# generates a joint VCF using GenotypeGVCFs.
+# Parellel runs 100 jobs to speed up process -> chunks
+
+# User should edit the variables at the top:
+# REF, SAMPLE_MAP_NEW, INTERVALS_DIR, VCF_DIR, DB_BASE, OUT_DIR, VCF_OUT, CHUNKS
+# Notes:
+# IMPORTANT - ALL INFORMATION AND FILES MUST BE SAME AS PREVIOUS GENOMICSDB
+# - DB_DIR should be empty for a new GenomicsDB workspace
+# - Use --genomicsdb-update-workspace-path to add new samples later
+# - REF_INTERVALS should be a line-separated list of scaffolds/chromosomes
+
 #!/bin/bash
 # Configuration
 REF=<USER INPUT>
 SAMPLE_MAP_NEW=<USER INPUT>   # ONLY NEW SAMPLES
-INTERVALS_OUT=<USER INPUT>    # MUST be SAME as previous run
+INTERVALS_DIR=<USER INPUT>    # MUST be SAME as previous run
 DB_BASE=<USER INPUT>
 VCF_OUT=<USER INPUT>
 CHUNKS=<USER INPUT>           # should match existing DB count
@@ -43,7 +58,7 @@ echo "Updating DB chunk ${CHUNK_ID}"
 gatk --java-options "-Xmx16G" GenomicsDBImport \\
     --genomicsdb-update-workspace-path \$DB_PATH \\
     --batch-size 50 \\
-    -L ${INTERVALS_OUT}/${CHUNK_ID}-scattered.interval_list \\
+    -L ${INTERVALS_DIR}/${CHUNK_ID}-scattered.interval_list \\
     --sample-name-map ${SAMPLE_MAP_NEW} \\
     --reader-threads 2
 
