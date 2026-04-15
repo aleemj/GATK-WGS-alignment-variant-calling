@@ -22,7 +22,7 @@ DB_BASE=<USER INPUT>
 VCF_OUT=<USER INPUT>
 CHUNKS=<USER INPUT>           # should match existing DB count
 
-mkdir -p jobs logs "$VCF_OUT"
+mkdir -p update_jobs logs "$VCF_OUT"
 
 # ❌ DO NOT regenerate intervals
 # gatk SplitIntervals ...
@@ -43,6 +43,9 @@ do
 #PBS -o logs/${CHUNK_ID}.out
 
 cd \$PBS_O_WORKDIR
+
+module load gatk samtools python
+
 
 DB_PATH=${DB_BASE}/db_chunk_${CHUNK_ID}
 
