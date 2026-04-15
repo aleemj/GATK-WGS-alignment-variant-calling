@@ -6,7 +6,7 @@
 # Parellel runs 100 jobs to speed up process -> chunks
 
 # User should edit the variables at the top:
-# REF, SAMPLE_MAP_NEW, INTERVALS_DIR, VCF_DIR, DB_BASE, OUT_DIR, VCF_OUT, CHUNKS
+# REF, SAMPLE_MAP_NEW, INTERVALS_DIR, VCF_DIR, DB_DIR, OUT_DIR, VCF_OUT, CHUNKS
 # Notes:
 # IMPORTANT - ALL INFORMATION AND FILES MUST BE SAME AS PREVIOUS GENOMICSDB
 # - DB_DIR should be empty for a new GenomicsDB workspace
@@ -15,23 +15,24 @@
 
 #!/bin/bash
 # Configuration
-REF=<USER INPUT>
-SAMPLE_MAP_NEW=<USER INPUT>   # ONLY NEW SAMPLES
-INTERVALS_DIR=<USER INPUT>    # MUST be SAME as previous run
-DB_BASE=<USER INPUT>
-VCF_OUT=<USER INPUT>
-CHUNKS=<USER INPUT>           # should match existing DB count
+REF="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/Arugula_ref_gen_V2/E_sativa.genome.final.fa"
+SH_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/sh_files"
+VCF_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/vcf_files"
+SAMPLE_MAP_NEW="$VCF_DIR/sample_map_new.txt"
+INTERVALS_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/ref/interval_lists_100"
+DB_DIR="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/genomics_dbs"
+VCF_OUT="/home/users/nus/e1583429/scratch/esativa_WGS_alignment/final_vcf"
+CHUNKS=100           # should match existing DB count
+
+cd $SH_DIR
 
 mkdir -p update_jobs logs "$VCF_OUT"
-
-# ❌ DO NOT regenerate intervals
-# gatk SplitIntervals ...
 
 # 2. Generate PBS scripts
 for i in $(seq 0 $((CHUNKS-1)))
 do
     CHUNK_ID=$(printf "%04d" $i)
-    SCRIPT="jobs/update_gatk_${CHUNK_ID}.sh"
+    SCRIPT="update_jobs/update_gatk_${CHUNK_ID}.sh"
 
     cat <<EOT > $SCRIPT
 #!/bin/bash
@@ -39,15 +40,14 @@ do
 #PBS -l select=1:ncpus=2:mem=100G
 #PBS -l walltime=72:00:00
 #PBS -N UpdateGenotyping_${CHUNK_ID}
-#PBS -e logs/${CHUNK_ID}.err
 #PBS -o logs/${CHUNK_ID}.out
+#PBS -e logs/${CHUNK_ID}.err
 
 cd \$PBS_O_WORKDIR
 
 module load gatk samtools python
 
-
-DB_PATH=${DB_BASE}/db_chunk_${CHUNK_ID}
+DB_PATH=${DB_DIR}/db_chunk_${CHUNK_ID}
 
 # 🚨 Safety check
 if [ ! -d "\$DB_PATH" ]; then
@@ -78,7 +78,6 @@ EOT
     chmod +x $SCRIPT
 done
 
-echo "Success: Created update jobs in 'jobs/' folder."
-
+echo "Success: Created update jobs in 'update_jobs/' folder."
 # Submit
-# for script in jobs/*.sh; do qsub $script; done
+# for script in update_jobs/*.sh; do qsub $script; done
