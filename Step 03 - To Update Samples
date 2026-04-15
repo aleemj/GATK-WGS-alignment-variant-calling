@@ -37,8 +37,8 @@ do
     cat <<EOT > $SCRIPT
 #!/bin/bash
 #PBS -q normal
-#PBS -l select=1:ncpus=2:mem=100G
-#PBS -l walltime=72:00:00
+#PBS -l select=1:ncpus=2:mem=64G
+#PBS -l walltime=24:00:00
 #PBS -N UpdateGenotyping_${CHUNK_ID}
 #PBS -o logs/${CHUNK_ID}.out
 #PBS -e logs/${CHUNK_ID}.err
