@@ -37,7 +37,7 @@ do
     cat <<EOT > $SCRIPT
 #!/bin/bash
 #PBS -q normal
-#PBS -l select=1:ncpus=2:mem=64G
+#PBS -l select=1:ncpus=1:mem=64G
 #PBS -l walltime=24:00:00
 #PBS -N UpdateGenotyping_${CHUNK_ID}
 #PBS -o logs/${CHUNK_ID}.out
@@ -63,7 +63,7 @@ gatk --java-options "-Xmx16G" GenomicsDBImport \\
     --batch-size 50 \\
     -L ${INTERVALS_DIR}/${CHUNK_ID}-scattered.interval_list \\
     --sample-name-map ${SAMPLE_MAP_NEW} \\
-    --reader-threads 2
+    --reader-threads 1
 
 echo "Running GenotypeGVCFs for chunk ${CHUNK_ID}"
 
