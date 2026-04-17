@@ -27,7 +27,7 @@ NAME=<USER INPUT>
 ls ${OUT_DIR}/part_*.vcf.gz > input_vcfs.list
 
 # Gather into one final file
-gatk --java-options "-Xmx80G" GatherVCFs \
+gatk --java-options "-Xmx80G" GatherVcfs \
     -I input_vcfs.list \
     -O ${OUT_DIR}/{$NAME}.vcf.gz
 
