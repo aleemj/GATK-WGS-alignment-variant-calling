@@ -23,11 +23,11 @@ PREFIX=${OUT_DIR}/${NAME}
 VCF_IN=${PREFIX}.vcf.gz
 
 # Create a list of all part files in order
-ls ${OUT_DIR}/part_*.vcf.gz > input_vcfs.list
+ls ${OUT_DIR}/part_*.vcf.gz > ${OUT_DIR}input_vcfs.list
 
 # Gather into one final file
 gatk --java-options "-Xmx80G" GatherVcfs \
-    -I input_vcfs.list \
+    -I ${OUT_DIR}input_vcfs.list \
     -O $VCF_IN
 
 # ---------------- Index VCF ----------------
