@@ -16,12 +16,11 @@ set -euo pipefail
 module load gatk bcftools python samtools
 
 # ---------------- User-defined variables ----------------
-THREADS=1
-JAVA_MEM="80G"
 REF=<USER INPUT>
-VCF_IN=<USER INPUT>
 OUT_DIR=<USER INPUT>
 NAME=<USER INPUT>
+PREFIX=${OUT_DIR}/${NAME}
+VCF_IN=${PREFIX}.vcf.gz
 
 # Create a list of all part files in order
 ls ${OUT_DIR}/part_*.vcf.gz > input_vcfs.list
@@ -29,48 +28,43 @@ ls ${OUT_DIR}/part_*.vcf.gz > input_vcfs.list
 # Gather into one final file
 gatk --java-options "-Xmx80G" GatherVcfs \
     -I input_vcfs.list \
-    -O ${OUT_DIR}/{$NAME}.vcf.gz
+    -O $VCF_IN
 
 # ---------------- Index VCF ----------------
-bcftools sort \
-  -Oz \
-  -o $OUT_DIR/$NAME.sorted.vcf.gz \
-  $VCF_IN
-
-bcftools index -t $OUT_DIR/$NAME.sorted.vcf.gz
+bcftools index -t $VCF_IN
 
 # ---------------- SNPs: Select, Filter, and Clean ----------------
 # 1. Extract SNPs only
-gatk SelectVariants -R $REF -V $OUT_DIR/$NAME.sorted.vcf.gz --select-type-to-include SNP -O $OUT_DIR/$NAME.raw_snps.vcf.gz
+gatk SelectVariants -R $REF -V $VCF_IN --select-type-to-include SNP -O ${PREFIX}.raw_snps.vcf.gz
 
 # 2. Apply Filter Tags
-gatk VariantFiltration -R $REF -V $OUT_DIR/$NAME.raw_snps.vcf.gz \
+gatk VariantFiltration -R $REF -V ${PREFIX}.raw_snps.vcf.gz \
   --filter-name "QD2" --filter-expression "QD < 2.0" \
   --filter-name "FS60" --filter-expression "FS > 60.0" \
   --filter-name "MQ40" --filter-expression "MQ < 40.0" \
   --filter-name "SOR3" --filter-expression "SOR > 3.0" \
   --filter-name "MQRS-12.5" --filter-expression "MQRankSum < -12.5" \
   --filter-name "RPRS-8" --filter-expression "ReadPosRankSum < -8.0" \
-  -O $OUT_DIR/$NAME.tagged_snps.vcf.gz
+  -O $PREFIX.tagged_snps.vcf.gz
 
 # 3. Keep only PASSing variants (Removes tagged ones)
-bcftools view -f PASS $OUT_DIR/$NAME.tagged_snps.vcf.gz -Oz -o $OUT_DIR/$NAME.SNP.PASS.vcf.gz
+bcftools view -f PASS ${PREFIX}.tagged_snps.vcf.gz -Oz -o ${PREFIX}.SNP.PASS.vcf.gz
 
 # ---------------- Indels: Select, Filter, and Clean ----------------
 # 1. Extract Indels only
-gatk SelectVariants -R $REF -V $OUT_DIR/$NAME.sorted.vcf.gz --select-type-to-include INDEL -O $OUT_DIR/$NAME.raw_indels.vcf.gz
+gatk SelectVariants -R $REF -V $VCF_IN --select-type-to-include INDEL -O ${PREFIX}.raw_indels.vcf.gz
 
 # 2. Apply Filter Tags
-gatk VariantFiltration -R $REF -V $OUT_DIR/$NAME.raw_indels.vcf.gz \
+gatk VariantFiltration -R $REF -V ${PREFIX}.raw_indels.vcf.gz \
   --filter-name "QD2" --filter-expression "QD < 2.0" \
   --filter-name "FS200" --filter-expression "FS > 200.0" \
   --filter-name "SOR10" --filter-expression "SOR > 10.0" \
   --filter-name "RPRS-20" --filter-expression "ReadPosRankSum < -20.0" \
-  -O $OUT_DIR/$NAME.tagged_indels.vcf.gz
+  -O $PREFIX.tagged_indels.vcf.gz
 
 # 3. Keep only PASSing variants
-bcftools view -f PASS $OUT_DIR/$NAME.tagged_indels.vcf.gz -Oz -o $OUT_DIR/$NAME.INDEL.PASS.vcf.gz
+bcftools view -f PASS ${PREFIX}.tagged_indels.vcf.gz -Oz -o ${PREFIX}.INDEL.PASS.vcf.gz
 
 # Index final outputs
-bcftools index -t $OUT_DIR/$NAME.SNP.PASS.vcf.gz
-bcftools index -t $OUT_DIR/$NAME.INDEL.PASS.vcf.gz
+bcftools index -t ${PREFIX}.SNP.PASS.vcf.gz
+bcftools index -t ${PREFIX}.INDEL.PASS.vcf.gz
