@@ -30,12 +30,17 @@ gatk --java-options "-Xmx80G" GatherVcfs \
     -I ${OUT_DIR}input_vcfs.list \
     -O $VCF_IN
 
-# ---------------- Index VCF ----------------
-bcftools index -t $VCF_IN
+# ---------------- Sort / Index VCF ----------------
+bcftools sort \
+  -Oz \
+  -o ${PREFIX}.sorted.vcf.gz \
+  $VCF_IN
+
+bcftools index -t $${PREFIX}.sorted.vcf.gz
 
 # ---------------- SNPs: Select, Filter, and Clean ----------------
 # 1. Extract SNPs only
-gatk SelectVariants -R $REF -V $VCF_IN --select-type-to-include SNP -O ${PREFIX}.raw_snps.vcf.gz
+gatk SelectVariants -R $REF -V ${PREFIX}.sorted.vcf.gz --select-type-to-include SNP -O ${PREFIX}.raw_snps.vcf.gz
 
 # 2. Apply Filter Tags
 gatk VariantFiltration -R $REF -V ${PREFIX}.raw_snps.vcf.gz \
@@ -52,7 +57,7 @@ bcftools view -f PASS ${PREFIX}.tagged_snps.vcf.gz -Oz -o ${PREFIX}.SNP.PASS.vcf
 
 # ---------------- Indels: Select, Filter, and Clean ----------------
 # 1. Extract Indels only
-gatk SelectVariants -R $REF -V $VCF_IN --select-type-to-include INDEL -O ${PREFIX}.raw_indels.vcf.gz
+gatk SelectVariants -R $REF -V ${PREFIX}.sorted.vcf.gz --select-type-to-include INDEL -O ${PREFIX}.raw_indels.vcf.gz
 
 # 2. Apply Filter Tags
 gatk VariantFiltration -R $REF -V ${PREFIX}.raw_indels.vcf.gz \
